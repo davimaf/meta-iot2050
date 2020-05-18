@@ -1,0 +1,70 @@
+#!/usr/bin/make -f
+
+# Debian rules for custom U-Boot build
+#
+# Copyright (c) Siemens AG, 2019-2020
+#
+# Authors:
+#  Le Jin <le.jin@siemens.com>
+#  Jan Kiszka <jan.kiszka@siemens.com>
+#
+# This file is subject to the terms and conditions of the MIT License.  See
+# COPYING.MIT file in the top-level directory.
+#
+
+ifneq ($(DEB_BUILD_GNU_TYPE),$(DEB_HOST_GNU_TYPE))
+export CROSS_COMPILE=$(DEB_HOST_GNU_TYPE)-
+SET_CROSS_BUILD_TOOLS=CROSS_BUILD_TOOLS=y
+endif
+
+WORKDIR=$(shell cd ..; pwd)
+PREBUILD_DIR=$(WORKDIR)/prebuild
+
+ifeq ($(IOT2050_VARIANT), advanced)
+    SEBOOT_IMG=$(PREBUILD_DIR)/tiboot3_advanced.bin
+    UBOOT_SYSFW=$(PREBUILD_DIR)/sysfw.itb_HS
+else
+    SEBOOT_IMG=$(PREBUILD_DIR)/tiboot3_basic.bin
+    UBOOT_SYSFW=$(PREBUILD_DIR)/sysfw.itb
+endif
+
+PARALLEL_BUILD=-j $(shell echo $$(($$(nproc) * 2)))
+
+UBOOT_A53_SPL_IMAGE=tispl.bin
+UBOOT_A53_IMAGE=u-boot.itb
+
+export ATF=/usr/lib/arm-trusted-firmware/iot2050/bl31.bin
+export TEE=/usr/lib/op-tee/iot2050/tee-pager_v2.bin
+
+override_dh_auto_build:
+	# A53 core
+	$(MAKE) $(PARALLEL_BUILD) CROSS_COMPILE=$(CROSS_COMPILE) iot2050_defconfig
+	$(MAKE) $(PARALLEL_BUILD) CROSS_COMPILE=$(CROSS_COMPILE)
+
+	# SPI flash image
+	dd if=/dev/zero ibs=1k count=$(SPI_FLASH_SIZE_KB) | tr "\000" "\377" > $(SPI_FLASH_IMG)
+	dd if=$(SEBOOT_IMG) of=$(SPI_FLASH_IMG) seek=0 oflag=seek_bytes conv=notrunc
+	dd if=$(UBOOT_A53_SPL_IMAGE) of=$(SPI_FLASH_IMG) seek=512K oflag=seek_bytes conv=notrunc
+	dd if=$(UBOOT_A53_IMAGE) of=$(SPI_FLASH_IMG) seek=2560K oflag=seek_bytes conv=notrunc
+	# Env
+	dd if=/dev/zero ibs=1k count=128 of=$(SPI_FLASH_IMG) seek=6656K oflag=seek_bytes conv=notrunc
+	# Env.bak
+	dd if=/dev/zero ibs=1k count=128 of=$(SPI_FLASH_IMG) seek=6784K oflag=seek_bytes conv=notrunc
+	# SysFW
+	dd if=$(UBOOT_SYSFW) of=$(SPI_FLASH_IMG) seek=6912K oflag=seek_bytes conv=notrunc
+	# PRU ethernet FW
+	dd if=$(PREBUILD_DIR)/am65x-pru0-prueth-fw.elf of=$(SPI_FLASH_IMG) seek=7936K oflag=seek_bytes conv=notrunc
+	dd if=$(PREBUILD_DIR)/am65x-pru1-prueth-fw.elf of=$(SPI_FLASH_IMG) seek=8000K oflag=seek_bytes conv=notrunc
+	dd if=$(PREBUILD_DIR)/am65x-rtu0-prueth-fw.elf of=$(SPI_FLASH_IMG) seek=8064K oflag=seek_bytes conv=notrunc
+	dd if=$(PREBUILD_DIR)/am65x-rtu1-prueth-fw.elf of=$(SPI_FLASH_IMG) seek=8128K oflag=seek_bytes conv=notrunc
+
+	# Tools
+	$(MAKE) $(PARALLEL_BUILD) $(SET_CROSS_BUILD_TOOLS) CROSS_COMPILE=$(CROSS_COMPILE) NO_SDL=1 tools-only envtools
+
+override_dh_auto_install:
+	mv tools/env/lib.a tools/env/libubootenv.a
+
+override_dh_auto_test:
+
+%:
+	CFLAGS= LDFLAGS= dh $@ --parallel
