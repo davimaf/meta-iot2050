@@ -1,0 +1,57 @@
+From 50422b4545b338d8166d93a71fc41a14c02ebc9c Mon Sep 17 00:00:00 2001
+From: Jan Kiszka <jan.kiszka@siemens.com>
+Date: Wed, 20 May 2020 07:19:24 +0200
+Subject: [PATCH 2/3] Add infrastructure for selecting output UART
+
+Make the output UART configurable for platforms that have multiple
+options. Default is 0, the first one.
+
+Signed-off-by: Jan Kiszka <jan.kiszka@siemens.com>
+Change-Id: I68fc92d41a9e5f57f5bc436ffc39eb01309265d6
+---
+ Makefile                 | 3 +++
+ make_helpers/defaults.mk | 3 +++
+ 2 files changed, 6 insertions(+)
+
+diff --git a/Makefile b/Makefile
+index 2f53cdf1b..ab4d8576a 100644
+--- a/Makefile
++++ b/Makefile
+@@ -32,6 +32,7 @@ include ${MAKE_HELPERS_DIRECTORY}defaults.mk
+ ENABLE_ASSERTIONS		:= ${DEBUG}
+ ENABLE_PMF			:= ${ENABLE_RUNTIME_INSTRUMENTATION}
+ PLAT				:= ${DEFAULT_PLAT}
++UART				:= ${DEFAULT_UART}
+ 
+ ################################################################################
+ # Checkpatch script options
+@@ -904,6 +905,7 @@ $(eval $(call assert_numeric,ARM_ARCH_MAJOR))
+ $(eval $(call assert_numeric,ARM_ARCH_MINOR))
+ $(eval $(call assert_numeric,BRANCH_PROTECTION))
+ $(eval $(call assert_numeric,FW_ENC_STATUS))
++$(eval $(call assert_numeric,UART))
+ 
+ ifdef KEY_SIZE
+         $(eval $(call assert_numeric,KEY_SIZE))
+@@ -977,6 +979,7 @@ $(eval $(call add_define,BL2_IN_XIP_MEM))
+ $(eval $(call add_define,BL2_INV_DCACHE))
+ $(eval $(call add_define,USE_SPINLOCK_CAS))
+ $(eval $(call add_define,ERRATA_SPECULATIVE_AT))
++$(eval $(call add_define,UART))
+ 
+ ifeq (${SANITIZE_UB},trap)
+         $(eval $(call add_define,MONITOR_TRAPS))
+diff --git a/make_helpers/defaults.mk b/make_helpers/defaults.mk
+index e5880d206..593e006f3 100644
+--- a/make_helpers/defaults.mk
++++ b/make_helpers/defaults.mk
+@@ -299,3 +299,6 @@ SUPPORT_STACK_MEMTAG		:= no
+ 
+ # Select workaround for AT speculative behaviour.
+ ERRATA_SPECULATIVE_AT           := 0
++
++# Default output UART number if platform supports selection
++DEFAULT_UART			:= 0
+-- 
+2.26.1
+

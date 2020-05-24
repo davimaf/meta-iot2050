@@ -1,0 +1,30 @@
+From 375ad3a4fbd5a801e630dcce4f4a0de384845224 Mon Sep 17 00:00:00 2001
+From: Jan Kiszka <jan.kiszka@siemens.com>
+Date: Wed, 20 May 2020 07:35:48 +0200
+Subject: [PATCH 3/3] ti: k3: common: Make UART number configurable
+
+This allows to build for k3-based boards that use a different UART as
+console, such as the IOT2050 which requires UART=1.
+
+Signed-off-by: Jan Kiszka <jan.kiszka@siemens.com>
+Change-Id: I7171f86c3cabae2c575b8fbeecef839b48bd109b
+---
+ plat/ti/k3/include/platform_def.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/plat/ti/k3/include/platform_def.h b/plat/ti/k3/include/platform_def.h
+index 690c68e5c..3a6a39d26 100644
+--- a/plat/ti/k3/include/platform_def.h
++++ b/plat/ti/k3/include/platform_def.h
+@@ -91,7 +91,7 @@
+ 
+ /* Platform default console definitions */
+ #ifndef K3_USART_BASE
+-#define K3_USART_BASE 0x02800000
++#define K3_USART_BASE			(0x02800000 + 0x10000 * UART)
+ #endif
+ 
+ /* USART has a default size for address space */
+-- 
+2.26.1
+
