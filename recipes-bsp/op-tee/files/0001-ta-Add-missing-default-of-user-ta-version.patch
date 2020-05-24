@@ -1,0 +1,29 @@
+From 7121225d71c1a1a6580bfb9d9e389e2ba08a1e32 Mon Sep 17 00:00:00 2001
+From: Jan Kiszka <jan.kiszka@siemens.com>
+Date: Sun, 17 May 2020 12:48:35 +0200
+Subject: [PATCH 1/2] ta: Add missing default of user-ta-version
+
+Unbreaks building when anything but avb happens to be built first.
+
+Fixes: 682f256caaf6 ("TA dev kit: expose CFG_TA_VERSION build option")
+Signed-off-by: Jan Kiszka <jan.kiszka@siemens.com>
+---
+ ta/arch/arm/link.mk | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/ta/arch/arm/link.mk b/ta/arch/arm/link.mk
+index 9c98fe1c..3d1a5cd7 100644
+--- a/ta/arch/arm/link.mk
++++ b/ta/arch/arm/link.mk
+@@ -5,6 +5,8 @@ link-script-dep$(sm) = $(link-out-dir$(sm))/.ta.ld.d
+ SIGN_ENC ?= $(ta-dev-kit-dir$(sm))/scripts/sign_encrypt.py
+ TA_SIGN_KEY ?= $(ta-dev-kit-dir$(sm))/keys/default_ta.pem
+ 
++user-ta-version ?= 0
++
+ ifeq ($(CFG_ENCRYPT_TA),y)
+ # Default TA encryption key is a dummy key derived from default
+ # hardware unique key (an array of 16 zero bytes) to demonstrate
+-- 
+2.26.1
+

@@ -1,0 +1,48 @@
+From f66b68187c685f0a4e05a885a5ddefa07b638bdc Mon Sep 17 00:00:00 2001
+From: Jan Kiszka <jan.kiszka@siemens.com>
+Date: Wed, 20 May 2020 19:11:30 +0200
+Subject: [PATCH 2/2] plat-k3: Make UART number configurable via
+ CFG_CONSOLE_UART
+
+This is analogous to plat-hikey and allows to select a different console
+UART for the k3 platform as well during build. This is needed to enable
+support for the IOT2050 device which uses the second UART.
+
+Signed-off-by: Jan Kiszka <jan.kiszka@siemens.com>
+---
+ core/arch/arm/plat-k3/conf.mk           | 1 +
+ core/arch/arm/plat-k3/platform_config.h | 5 +----
+ 2 files changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/core/arch/arm/plat-k3/conf.mk b/core/arch/arm/plat-k3/conf.mk
+index 5f38a1a7..168b5d4d 100644
+--- a/core/arch/arm/plat-k3/conf.mk
++++ b/core/arch/arm/plat-k3/conf.mk
+@@ -3,6 +3,7 @@ CFG_WITH_STATS ?= y
+ CFG_CRYPTO_WITH_CE ?= n
+ CFG_WITH_SOFTWARE_PRNG ?= y
+ CFG_SECURE_DATA_PATH ?= y
++CFG_CONSOLE_UART ?= 0
+ 
+ CFG_TZDRAM_START ?= 0x9e800000
+ CFG_TZDRAM_SIZE ?= 0x01400000 # 20MB
+diff --git a/core/arch/arm/plat-k3/platform_config.h b/core/arch/arm/plat-k3/platform_config.h
+index 186e7e69..723315d7 100644
+--- a/core/arch/arm/plat-k3/platform_config.h
++++ b/core/arch/arm/plat-k3/platform_config.h
+@@ -10,11 +10,8 @@
+ #include <mm/generic_ram_layout.h>
+ 
+ #define UART0_BASE      0x02800000
+-#define UART1_BASE      0x02810000
+-#define UART2_BASE      0x02820000
+ 
+-/* UART0 */
+-#define CONSOLE_UART_BASE       UART0_BASE
++#define CONSOLE_UART_BASE       (UART0_BASE + CFG_CONSOLE_UART * 0x10000)
+ #define CONSOLE_BAUDRATE        115200
+ #define CONSOLE_UART_CLK_IN_HZ  48000000
+ 
+-- 
+2.26.1
+
